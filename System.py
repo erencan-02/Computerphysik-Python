@@ -2,10 +2,10 @@ import numpy as np
 
 
 class System:
-    def __init__(self, G=1.0, softening=2):
+    def __init__(self, G=1.0, softening=2, bodies=[]):
         self.G = G
         self.softening = softening
-        self.bodies = []
+        self.bodies = bodies
     
     def add_body(self, body):
         self.bodies.append(body)
@@ -36,3 +36,9 @@ class System:
             
     def max_mass(self):
         return max([body.mass for body in self.bodies])
+    
+    def center_of_mass(self):
+        average_position = [b.mass * b.position for b in self.bodies]
+        total_mass = sum([b.mass for b in self.bodies])
+        
+        return sum(average_position) / total_mass

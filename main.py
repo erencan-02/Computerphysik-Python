@@ -1,5 +1,7 @@
 from Simulation import Simulation
+from Initializer import *
 
 if __name__ == "__main__":
-    sim = Simulation("bodies.json")
+    initializer = OrbitInitializer()
+    sim = Simulation(initializer=initializer)
     sim.run()

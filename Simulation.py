@@ -1,5 +1,6 @@
 from System import System
 from Body import Body
+from Colours import *
 
 import pygame
 import numpy as np
@@ -9,22 +10,17 @@ import json
 WIDTH = 800
 HEIGHT = 800
 
-# Colours
-WHITE = (255, 255, 255)
-GRAY = (100, 100, 100)
-BLACK = (0, 0, 0)
-RED = (255, 0, 0)
-BLUE = (0, 0, 255)
+
 
 # Time step
-DT = 0.2
+DT = 0.1
 
-ARROW_SCALE = 2
+ARROW_SCALE = 4
 ARROW_VELOCITY_THRESHOLD = 0.1
 MASS_SCALE = 20
 
 class Simulation:
-    def __init__(self, json_file):
+    def __init__(self, initializer):
         
         # Pygame setup
         pygame.init()
@@ -33,46 +29,34 @@ class Simulation:
         self.clock = pygame.time.Clock()
         
         # System 
-        self.system = System(G=1.0)
+        self.system = initializer.initialize()
         
         # Simulation Setup
         self.running = True
-        # self.init_bodies(json_file)
-        self.init_bodies_random(10)
         self.max_mass = self.system.max_mass()
 
-    
-    def init_bodies(self, json_file):
-        with open(json_file, 'r') as file:
-            data = json.load(file)
-            self.system.G = data.get("G", 1)
-            for body_data in data.get("bodies", []):
-                position = np.array(body_data["position"], dtype=np.float64)
-                velocity = np.array(body_data["velocity"], dtype=np.float64)
-                body = Body(body_data["mass"], position, velocity)
-                
-                self.system.add_body(body)
-                
-    def init_bodies_random(self, num_bodies):
-        # Generate with position based on gaussian distribution
-        for _ in range(num_bodies):
-            position = np.random.normal(2) * 50 + WIDTH//2 
-            velocity = np.random.randn(2) * 2
-            mass = np.random.uniform(1, 10)
-            
-            body = Body(mass, position, velocity)
-            self.system.add_body(body)
-    
     def run(self):
+        center_of_mass_history = []
+        
         while self.running:
             self.screen.fill(BLACK)
+            
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     self.running = False
             
+            # Update the system
             self.system.update(DT)
-            # self.draw_coordinate_system()
-            self.draw_bodies()
+            
+            # Draw
+            self.draw_coordinate_system()
+            self.draw_bodies(get_radius=lambda b: max(5, int((b.mass/self.max_mass) * MASS_SCALE)))
+            center = self.draw_center_of_mass()
+            center_of_mass_history.append(center)
+            
+            for i in range(1, len(center_of_mass_history)):
+                pygame.draw.line(self.screen, GREEN, center_of_mass_history[i-1], center_of_mass_history[i], 1)
+            
             pygame.display.flip()
             self.clock.tick(60)
         
@@ -92,9 +76,9 @@ class Simulation:
         for y in range(0, HEIGHT, 50):
             pygame.draw.line(self.screen, GRAY, (WIDTH // 2 - 5, y), (WIDTH // 2 + 5, y), 1)
             
-    def draw_arrow(self, position, vector, color):
+    def draw_arrow(self, position, vector, color, scale=1.0):
         if np.linalg.norm(vector) > 0:
-            end_pos = position + vector * ARROW_SCALE
+            end_pos = position + vector * scale
             pygame.draw.line(self.screen, color, position, end_pos, 2)
             
             # Arrowhead
@@ -105,11 +89,21 @@ class Simulation:
             pygame.draw.line(self.screen, color, end_pos, left_wing, 2)
             pygame.draw.line(self.screen, color, end_pos, right_wing, 2)
             
-    def draw_bodies(self):
-        for body in self.system.bodies:
+    def draw_center_of_mass(self):
+        center = self.system.center_of_mass()
+        pygame.draw.circle(self.screen, GREEN, (int(center[0]), int(center[1])), 5)
+        
+        return center
             
-            radius = max(5, int((body.mass/self.max_mass) * MASS_SCALE))
+    def draw_bodies(self, get_radius=lambda x: 5):
+        for body in self.system.bodies:
+
+            radius = get_radius(body)
+
             pygame.draw.circle(self.screen, WHITE, (int(body.position[0]), int(body.position[1])), radius)
             
-            # if np.linalg.norm(body.velocity) > ARROW_VELOCITY_THRESHOLD:
-            #     self.draw_arrow(body.position, body.velocity, RED)
+            if np.linalg.norm(body.velocity) > ARROW_VELOCITY_THRESHOLD:
+                self.draw_arrow(body.position, body.velocity, RED, scale=2.0)
+
+            if np.linalg.norm(body.acceleration) > ARROW_VELOCITY_THRESHOLD:
+                self.draw_arrow(body.position, body.acceleration, BLUE, scale=10.0)
