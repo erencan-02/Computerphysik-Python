@@ -1,19 +1,10 @@
 from System import System
 from Body import Body
-from Colours import *
+from Constants import *
 
 import pygame
 import numpy as np
 import json
-
-# Screen dimensions
-WIDTH = 800
-HEIGHT = 800
-
-
-
-# Time step
-DT = 0.1
 
 ARROW_SCALE = 4
 ARROW_VELOCITY_THRESHOLD = 0.1

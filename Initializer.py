@@ -8,7 +8,7 @@ class Initializer():
     def __init__(self):
         pass
     
-    def initialize(self, model) -> System:
+    def initialize(self) -> System:
         raise NotImplementedError
     
 class ConfigInitializer(Initializer):
@@ -62,4 +62,33 @@ class OrbitInitializer(Initializer):
         bodies.append(sun)
         bodies.append(earth)
         
+        return System(G=1.0, bodies=bodies)
+    
+class SunEarthMoonInitializer(Initializer):
+    def __init__(self, width, height):
+        self.width = width
+        self.height = height
+    
+    def initialize(self) -> System:
+        
+        # Positions
+        center = np.array([self.width//2, self.height//2], dtype=np.float64)
+        earth_position = center + np.array([200, 0], dtype=np.float64)
+        moon_position = earth_position + np.array([10, 0], dtype=np.float64)
+        
+        # Velocities
+        earth_velocity = np.array([0, 10], dtype=np.float64)
+        moon_velocity = np.array([0, 2], dtype=np.float64)
+        
+        # Mass
+        sun_mass = 1000
+        earth_mass = 10
+        moon_mass = 1    
+        
+        # Initialize Bodies
+        sun = Body(sun_mass, center, np.zeros(2, dtype=np.float64))
+        earth = Body(earth_mass, earth_position, earth_velocity)
+        moon = Body(moon_mass, moon_position, moon_velocity)
+        
+        bodies = [sun, earth, moon]
         return System(G=1.0, bodies=bodies)

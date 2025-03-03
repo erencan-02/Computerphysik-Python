@@ -1,3 +1,11 @@
+# Screen dimensions
+WIDTH = 800
+HEIGHT = 800
+
+# Time step
+DT = 0.1
+
+# Colours
 WHITE = (255, 255, 255)
 GRAY = (100, 100, 100)
 BLACK = (0, 0, 0)
