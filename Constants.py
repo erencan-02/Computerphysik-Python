@@ -1,6 +1,6 @@
 # Screen dimensions
-WIDTH = 800
-HEIGHT = 800
+WIDTH = 1920//2  # Full HD width
+HEIGHT = 1080//2  # Full HD height
 
 # Time step
 DT = 0.1

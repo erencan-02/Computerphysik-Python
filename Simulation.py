@@ -9,6 +9,8 @@ import json
 ARROW_SCALE = 4
 ARROW_VELOCITY_THRESHOLD = 0.1
 MASS_SCALE = 20
+VECTOR_FIELD_SPACING = 50  # Distance between field vectors
+VECTOR_FIELD_SCALE = 200  # Scaling factor for vector field arrows
 
 class Simulation:
     def __init__(self, initializer):
@@ -44,6 +46,7 @@ class Simulation:
             self.draw_bodies(get_radius=lambda b: max(5, int((b.mass/self.max_mass) * MASS_SCALE)))
             center = self.draw_center_of_mass()
             center_of_mass_history.append(center)
+            self.draw_vector_field()
             
             for i in range(1, len(center_of_mass_history)):
                 pygame.draw.line(self.screen, GREEN, center_of_mass_history[i-1], center_of_mass_history[i], 1)
@@ -97,4 +100,32 @@ class Simulation:
                 self.draw_arrow(body.position, body.velocity, RED, scale=2.0)
 
             if np.linalg.norm(body.acceleration) > ARROW_VELOCITY_THRESHOLD:
-                self.draw_arrow(body.position, body.acceleration, BLUE, scale=10.0)
+                self.draw_arrow(body.position, body.acceleration, BLUE, scale=4.0)
+                
+    def draw_vector_line(self, position, vector, color):
+        if np.linalg.norm(vector) > 0:
+            end_pos = position + vector * 0.5  # Shorten the line
+            pygame.draw.line(self.screen, color, position, end_pos, 1)
+                    
+    def draw_vector_field(self):
+        for x in range(0, WIDTH, VECTOR_FIELD_SPACING):
+            for y in range(0, HEIGHT, VECTOR_FIELD_SPACING):
+                field_pos = np.array([x, y], dtype=np.float64)
+                acceleration = np.zeros(2, dtype=np.float64)
+                    
+                for body in self.system.bodies:
+                    r_vec = body.position - field_pos
+                    r_mag = np.linalg.norm(r_vec) 
+                    
+                    # if r_mag > 20:
+                    #     continue
+                    
+                    acceleration += self.system.G * body.mass / r_mag**2 * r_vec
+                    
+                if np.linalg.norm(acceleration) <= 10:
+                    scale = 1.0
+                else:
+                    scale = 10/np.linalg.norm(acceleration)
+                    
+                self.draw_arrow(field_pos, acceleration, GRAY, scale=scale)
+        
